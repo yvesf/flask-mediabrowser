@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+    <title>Watch - {{ filename }}</title>
+    <script src="{{url_for('mediabrowser.assets', filename='hls.js')}}"></script>
+    <link rel="stylesheet" href="{{ url_for('mediabrowser.assets', filename='style.css') }}"/>
+</head>
+<body class="watch">
+<video controls id="video"></video>
+<div id="trigger">
+    <div id="infos">
+        <a href="{{ url_for('mediabrowser.m3u8', path=path) }}">
+            <div>
+                <img src="{{ url_for('mediabrowser.assets', filename='playlist.png') }}"/>
+                <br/>
+                HLS with transcoding
+            </div>
+        </a>
+        <a href="{{ url_for('mediabrowser.download_inline', path=path) }}">
+            <div>
+                <img src="{{ url_for('mediabrowser.assets', filename='playlist.png') }}"/>
+                <br/>
+                Inline
+            </div>
+        </a>
+        <a href="{{ url_for('mediabrowser.download', path=path) }}">
+            <div>
+                <img src="{{ url_for('mediabrowser.assets', filename='playlist.png') }}"/>
+                <br/>
+                Download
+            </div>
+        </a>
+    </div>
+    <div id="logging">
+
+    </div>
+</div>
+<script>
+    var logger = {
+        'log': function (message) {
+            function makeTimestamp() {
+                var d = new Date();
+                return d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + "." + d.getMilliseconds();
+            }
+
+            if (!message) return;
+            var messageEl = document.createElement("div");
+            messageEl.setAttribute("class", "loggingMessage");
+            messageEl.appendChild(document.createTextNode(makeTimestamp() + " : " + message));
+            var loggingEl = document.getElementById("logging");
+            if (loggingEl.firstChild) {
+                loggingEl.insertBefore(messageEl, loggingEl.firstChild);
+            } else {
+                appendChild(messageEl);
+            }
+        }
+    };
+    if (Hls.isSupported()) {
+        var video = document.getElementById('video');
+        var config = {
+            debug: logger,
+            maxBufferLength: 500,
+            manifestLoadingTimeOut: 120000,
+            levelLoadingTimeOut: 20000,
+            fragLoadingTimeOut: 50000
+        };
+        var hls = new Hls(config);
+        hls.loadSource("{{ url_for('mediabrowser.m3u8', path=path) }}");
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+            video.play();
+        });
+        hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        // try to recover network error
+                        console.log("fatal network error encountered, try to recover");
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log("fatal media error encountered, try to recover");
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        // cannot recover
+                        hls.destroy();
+                        console.log([event, data]);
+                        alert(event);
+                        break;
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

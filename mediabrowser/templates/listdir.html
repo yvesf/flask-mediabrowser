@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Directory Browser - {{ path }}</title>
+        <link rel="stylesheet" href="{{ url_for('mediabrowser.assets', filename='style.css') }}" />
+    </head>
+    <body class="list">
+        {% if parent != path %}
+        <div>
+            <a href="{{ url_for('mediabrowser.listdir', path=parent) }}">
+                <div style="width: 100%">
+                    <img src="{{ url_for('mediabrowser.assets', filename='parent.png') }}" />
+                    ..
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        {% for file in files %}
+        {% if file['type'] == 'file' %}
+        <div>
+            <img src="{{ url_for('mediabrowser.thumbnail', path=file['fullpath']) }}" />
+            <a href="{{ url_for('mediabrowser.watch', path=file['fullpath']) }}">
+                {{ file['filename'] }} 
+            </a>
+        </div>
+        {% endif %}
+
+        {% if file['type'] == 'directory' %}
+        <div>
+            <a href="{{ file['link'] }}">
+                <div style="width: 100%">
+                    <img src="{{ url_for('mediabrowser.assets', filename='directory.png') }}" />
+                    {{ file['filename'] }}
+                </div>
+            </a>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </body>
+</html>

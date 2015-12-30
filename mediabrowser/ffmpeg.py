@@ -29,15 +29,15 @@ def ffprobe_data(ospath):
 def stream(ospath, ss, t):
     logging.info('start ffmpeg stream h264 480p on path=%s ss=%s t=%s', ospath, ss, t)
     t_2 = t + 2.0
+    output_ts_offset = ss
     cutter = LoggedPopen(
-        shlex.split("ffmpeg -ss {ss:.6f} -async 1 -i ".format(**locals())) +
+        shlex.split("ffmpeg -ss {ss:.6f} -i ".format(**locals())) +
         [ospath] +
         shlex.split("-c:a aac -strict experimental -ac 2 -b:a 44k"
-                    ""
                     " -c:v libx264 -pix_fmt yuv420p -profile:v high -level 4.0 -preset ultrafast -trellis 0"
                     " -crf 31 -vf scale=w=trunc(oh*a/2)*2:h=360"
-                    ""
-                    " -f mpegts -output_ts_offset {ss:.6f} -t {t:.6f} pipe:%d.ts".format(**locals())),
+                    " -f mpegts"
+                    " -output_ts_offset {output_ts_offset:.6f} -t {t:.6f} pipe:%d.ts".format(**locals())),
         stdout=PIPE, stderr=DEVNULL)
     return cutter
 
@@ -46,41 +46,50 @@ def find_next_keyframe(ospath, start, max_offset):
     """
     :param: start: start search pts as float '123.123'
     :param: max_offset: max offset after start as float
-    :return: PTS of next iframe but not search longer than max_offset
+    :return: (prev_duration, pts):
+                    prev_duration: duration of the frame previous to the found key-frame
+                    pts: PTS of next iframe but not search longer than max_offset
+    :raise: Exception if no keyframe found
     """
     logging.info("start ffprobe to find next i-frame from {}".format(start))
     if start == 0.0:
-        return 0.0
+        logging.info("return (0.0, 0.0) for start == 0.0")
+        return 0.0, 0.0
     process = LoggedPopen(
         shlex.split("ffprobe -read_intervals {start:.6f}%+{max_offset:.6f} -show_frames "
                     "-select_streams v -print_format flat".format(**locals())) + [ospath],
         stdout=PIPE, stderr=DEVNULL)
     data = {'frame': None}
+    prev_duration = None
     try:
         line = process.stdout.readline()
         while line:
             frame, name, value = re.match('frames\\.frame\\.(\d+)\\.([^=]*)=(.*)', line.decode('ascii')).groups()
             if data['frame'] != frame:
                 data.clear()
+                prev_duration = None
                 data['frame'] = frame
 
             data[name] = value
-            if 'key_frame' in data and data['key_frame'] == '1':
+
+            if 'pkt_duration_time' in data:
+                prev_duration = float(data['pkt_duration_time'][1:-1])
+
+            if 'key_frame' in data and data['key_frame'] == '1' and prev_duration is not None:
                 if 'pkt_pts_time' in data and data['pkt_pts_time'][1:-1] != 'N/A' and float(
                         data['pkt_pts_time'][1:-1]) > start:
-                    logging.info("Found pkt_pts_time={}".format(data['pkt_pts_time']))
-                    return float(data['pkt_pts_time'][1:-1])
+                    logging.info("Found pkt_pts_time={} prev__duration={}".format(data['pkt_pts_time'], prev_duration))
+                    return prev_duration, float(data['pkt_pts_time'][1:-1])
                 elif 'pkt_dts_time' in data and data['pkt_dts_time'][1:-1] != 'N/A' and float(
                         data['pkt_dts_time'][1:-1]) > start:
-                    logging.info("Found pkt_dts_time={}".format(data['pkt_dts_time']))
-                    return float(data['pkt_dts_time'][1:-1])
+                    logging.info("Found pkt_dts_time={} prev_duration={}".format(data['pkt_dts_time'], prev_duration))
+                    return prev_duration, float(data['pkt_dts_time'][1:-1])
 
             line = process.stdout.readline()
-        raise Exception("Failed to find next i-frame in {} .. {} of {}".format(start, max_offset, ospath))
+        raise Exception("Failed to find next i-frame in {} .. {} of {}".format(start, start + max_offset, ospath))
     finally:
         process.stdout.close()
         process.terminate()
-        logging.info("finished ffprobe to find next i-frame from {}".format(start))
 
 
 def calculate_splittimes(ospath, chunk_duration):

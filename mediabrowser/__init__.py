@@ -93,10 +93,21 @@ def build(root_directory, cache):
     def stream(ss, t, path):
         path = os.path.normpath(path)
         ospath = os.path.join(root_directory, path)
+        data = ffprobe(ospath)
+        duration = float(data['format']['duration'])
         # cut at next key frame after given time 'ss'
-        new_ss = ffmpeg.find_next_keyframe(ospath, ss, t / 2)
-        # find next key frame after given time 't'
-        new_t = ffmpeg.find_next_keyframe(ospath, ss + t, t / 2) - new_ss
+        _, new_ss = ffmpeg.find_next_keyframe(ospath, ss, t / 2)
+
+        if ss + t * 2 > duration:
+            # encode all remain frames at once
+            new_t = duration - new_ss
+        else:
+            # find next key frame after given time 't'
+            new_t_prev_duration, new_t = ffmpeg.find_next_keyframe(ospath, ss + t, t / 2)
+            new_t -= new_ss
+            # minus one frame
+            new_t -= new_t_prev_duration
+
         process = ffmpeg.stream(ospath, new_ss, new_t)
         return Response(process.stdout, mimetype='video/MP2T')
 

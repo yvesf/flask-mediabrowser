@@ -9,9 +9,6 @@ This webapplication serves the following purpose:
 The chunking is done using ffmpeg's `-ss` and `-t` option.
 This doesn't work properly on some video files.
 
-Also with some files we get chrome errors about audio-splicing with can lead to the point where the browser suddenly
-stops playback.
-
 # Compatibility
 
 The video stream is encoded as h.264 + AAC stream. Tested with

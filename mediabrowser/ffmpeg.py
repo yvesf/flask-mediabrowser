@@ -33,7 +33,7 @@ def stream(ospath, ss, t):
     cutter = LoggedPopen(
         shlex.split("ffmpeg -ss {ss:.6f} -i ".format(**locals())) +
         [ospath] +
-        shlex.split("-c:a aac -strict experimental -ac 2 -b:a 44k"
+        shlex.split("-c:a aac -strict experimental -ac 2 -b:a 64k"
                     " -c:v libx264 -pix_fmt yuv420p -profile:v high -level 4.0 -preset ultrafast -trellis 0"
                     " -crf 31 -vf scale=w=trunc(oh*a/2)*2:h=360"
                     " -f mpegts"

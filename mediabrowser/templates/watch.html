@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Watch - {{ filename }}</title>
-    <script src="{{url_for('mediabrowser.assets', filename='hls.js')}}"></script>
+    <script src="{{url_for('mediabrowser.assets', filename='hls.min.js')}}"></script>
     <link rel="stylesheet" href="{{ url_for('mediabrowser.assets', filename='style.css') }}"/>
 </head>
 <body class="watch">
@@ -74,19 +74,15 @@
             if (data.fatal) {
                 switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
-                        // try to recover network error
-                        console.log("fatal network error encountered, try to recover");
-                        hls.startLoad();
+                        logger.log("fatal network error encountered");
                         break;
                     case Hls.ErrorTypes.MEDIA_ERROR:
-                        console.log("fatal media error encountered, try to recover");
-                        hls.recoverMediaError();
+                        logger.log("fatal media error encountered");
                         break;
                     default:
                         // cannot recover
                         hls.destroy();
-                        console.log([event, data]);
-                        alert(event);
+                        logger.log([event, data]);
                         break;
                 }
             }

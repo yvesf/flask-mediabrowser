@@ -20,7 +20,6 @@ The video stream is encoded as h.264 + AAC stream. Tested with
 
 * python3, flask
 * `ffmpeg` command
-* `ffmpegthumbnailer` command
 
 # Run tests
 

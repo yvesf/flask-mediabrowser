@@ -35,7 +35,7 @@ def stream(ospath, ss, t):
         [ospath] +
         shlex.split("-c:a aac -strict experimental -ac 2 -b:a 64k"
                     " -c:v libx264 -pix_fmt yuv420p -profile:v high -level 4.0 -preset ultrafast -trellis 0"
-                    " -crf 31 -vf scale=w=trunc(oh*a/2)*2:h=360"
+                    " -crf 31 -vf scale=w=trunc(oh*a/2)*2:h=480"
                     " -f mpegts"
                     " -output_ts_offset {output_ts_offset:.6f} -t {t:.6f} pipe:%d.ts".format(**locals())),
         stdout=PIPE, stderr=DEVNULL)
@@ -110,17 +110,14 @@ def calculate_splittimes(ospath, chunk_duration):
 
     duration = float(ffprobe_data(ospath)['format']['duration'])
     points = list(calculate_points(duration))
-    adj_points = points
-    # for point in points:
-    #     adj_points += [find_next_iframe(ospath, point, chunk_duration / 2.0)]
-    #
-    for (point, nextPoint) in zip([0.0] + adj_points, adj_points + [duration]):
+    for (point, nextPoint) in zip([0.0] + points, points + [duration]):
         yield ("{:0.6f}".format(point), "{:0.6f}".format(nextPoint - point))
 
 
-def thumbnail_png(path, size):
-    logging.debug("thumbnail %s", path)
-    process = LoggedPopen(['ffmpegthumbnailer', '-i', path,
-                           '-o', '-', '-s', str(size), '-c', 'png'],
-                          stdout=PIPE, stderr=DEVNULL)
+def thumbnail(ospath, width, height):
+    process = LoggedPopen(shlex.split("ffmpeg -noaccurate_seek -ss 25.0 -i") + [ospath] +
+                          shlex.split("-frames:v 10 -map 0:0"
+                                      " -filter:v 'scale=w=oh*a:h={}, crop=(min(iw\,{})):(min(ih\,{}))'"
+                                      " -f singlejpeg pipe:".format(height+(height/10), width, height)),
+                          stdout=PIPE)
     return process

@@ -140,8 +140,8 @@ def build(root_directory, cache):
         if client_mtime is not None and mtime <= client_mtime:
             return Response(status=304)
         else:
-            process = ffmpeg.thumbnail_png(ospath, 64)
-            r = Response(process.stdout, mimetype="image/png")
+            process = ffmpeg.thumbnail(ospath, 90, 50)
+            r = Response(process.stdout, mimetype="image/jpeg")
             r.last_modified = mtime
             return r
 

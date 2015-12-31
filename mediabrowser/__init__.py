@@ -70,7 +70,7 @@ def build(root_directory, cache):
             '.webm': 'video/webm',
             '.flv': 'video/x-flv',
             '.mp4': 'video/mp4',
-            '.mpg': 'video/mp2t'}
+            '.mpg': 'video/MP2T'}
 
         (filetype, encoding) = mimetypes.guess_type(path)
         if filetype is None:
@@ -142,6 +142,20 @@ def build(root_directory, cache):
         else:
             process = ffmpeg.thumbnail(ospath, 90, 50)
             r = Response(process.stdout, mimetype="image/jpeg")
+            r.last_modified = mtime
+            return r
+
+    @blueprint.route('/<path:path>/thumbnail_video')
+    def thumbnail_video(path):
+        path = os.path.normpath(path)
+        ospath = os.path.join(root_directory, path)
+        client_mtime = request.if_modified_since
+        mtime = datetime.fromtimestamp(os.stat(ospath).st_mtime)
+        if client_mtime is not None and mtime <= client_mtime:
+            return Response(status=304)
+        else:
+            thumbnail_stream = ffmpeg.thumbnail_video(ospath, 90, 50)
+            r = Response(thumbnail_stream, mimetype="video/webm")
             r.last_modified = mtime
             return r
 

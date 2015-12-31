@@ -3,6 +3,28 @@
     <head>
         <title>Directory Browser - {{ path }}</title>
         <link rel="stylesheet" href="{{ url_for('mediabrowser.assets', filename='style.css') }}" />
+        <script>
+            function convertOneThumbnailToVideo() {
+                var els = document.getElementsByClassName("thumbnail");
+                if (els.length > 0) {
+                    var el = els[0];
+                    console.log("convert",el);
+
+                    var videoEl = document.createElement("video");
+                    videoEl.addEventListener("error", convertOneThumbnailToVideo, true);
+                    videoEl.addEventListener("canplaythrough", convertOneThumbnailToVideo, true);
+                    videoEl.setAttribute("width", 90);
+                    videoEl.setAttribute("height", 50);
+                    videoEl.setAttribute("autoplay", "");
+                    videoEl.setAttribute("loop", true);
+                    videoEl.setAttribute("src", el.getAttribute("data-video-src"));
+                    el.parentNode.replaceChild(videoEl, el);
+                }
+            }
+            window.onload = function() {
+                convertOneThumbnailToVideo();
+            }
+        </script>
     </head>
     <body class="list">
         {% if parent != path %}
@@ -19,7 +41,8 @@
         {% for file in files %}
         {% if file['type'] == 'file' %}
         <div>
-            <img src="{{ url_for('mediabrowser.thumbnail', path=file['fullpath']) }}" />
+            <img class="thumbnail" src="{{ url_for('mediabrowser.thumbnail', path=file['fullpath']) }}"
+                    data-video-src="{{ url_for('mediabrowser.thumbnail_video', path=file['fullpath']) }}"/>
             <a href="{{ url_for('mediabrowser.watch', path=file['fullpath']) }}">
                 {{ file['filename'] }} 
             </a>

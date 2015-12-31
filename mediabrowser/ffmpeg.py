@@ -18,7 +18,7 @@ def LoggedPopen(command, *args, **kwargs):
 
 def ffprobe_data(ospath):
     logging.info('ffprobe %s', ospath)
-    process = LoggedPopen(['ffprobe', '-v', 'quiet', '-print_format', 'json',
+    process = LoggedPopen(['ffprobe', '-v', 'fatal', '-print_format', 'json',
                            '-show_format', '-show_streams', ospath], stdout=PIPE, stderr=DEVNULL)
     data = json.load(utf8reader(process.stdout))
     assert process.wait() == 0, "ffprobe failed"
@@ -31,14 +31,14 @@ def stream(ospath, ss, t):
     t_2 = t + 2.0
     output_ts_offset = ss
     cutter = LoggedPopen(
-        shlex.split("ffmpeg -ss {ss:.6f} -i ".format(**locals())) +
+        shlex.split("ffmpeg -v fatal -ss {ss:.6f} -i ".format(**locals())) +
         [ospath] +
         shlex.split("-c:a aac -strict experimental -ac 2 -b:a 64k"
                     " -c:v libx264 -pix_fmt yuv420p -profile:v high -level 4.0 -preset ultrafast -trellis 0"
                     " -crf 31 -vf scale=w=trunc(oh*a/2)*2:h=480"
                     " -f mpegts"
                     " -output_ts_offset {output_ts_offset:.6f} -t {t:.6f} pipe:%d.ts".format(**locals())),
-        stdout=PIPE, stderr=DEVNULL)
+        stdout=PIPE)
     return cutter
 
 
@@ -121,3 +121,23 @@ def thumbnail(ospath, width, height):
                                       " -f singlejpeg pipe:".format(height+(height/10), width, height)),
                           stdout=PIPE)
     return process
+
+
+def thumbnail_video(ospath, width, height):
+    duration = float(ffprobe_data(ospath)['format']['duration'])
+
+    command = shlex.split("ffmpeg -v fatal")
+    chunk_startpos = range(min(int(duration)-1,30), int(duration), 500)
+    for pos in chunk_startpos:
+        command += ["-ss", "{:.6f}".format(pos), "-t", "2", "-i", ospath]
+
+    filter = " ".join(map(lambda i: "[{}:0]".format(i), range(len(chunk_startpos))))
+    filter += " concat=n={}:v=1:a=0 [v1]".format(len(chunk_startpos))
+    filter += "; [v1] fps=14 [v2]"
+    filter += "; [v2] scale='w=trunc(oh*a/2)*2:h={}' [v3]".format(height + 6)
+    filter += "; [v3] crop='min({},iw):min({},ih)' [v4]".format(width, height)
+    command += ['-filter_complex', filter, '-map', '[v4]']
+    command += shlex.split("-c:v libvpx -deadline realtime -f webm pipe:")
+
+    encoder = LoggedPopen(command, stdout=PIPE)
+    return encoder.stdout

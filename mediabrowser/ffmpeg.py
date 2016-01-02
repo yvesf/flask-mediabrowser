@@ -117,7 +117,7 @@ def calculate_splittimes(ospath, chunk_duration):
 def thumbnail(ospath, width, height):
     process = LoggedPopen(shlex.split("ffmpeg -v fatal -noaccurate_seek -ss 25.0 -i") + [ospath] +
                           shlex.split("-frames:v 10 -map 0:v"
-                                      " -filter:v 'scale=w=oh*a:h={}, crop=(min(iw\,{})):(min(ih\,{}))'"
+                                      " -filter:v \"scale='w=trunc(oh*a/2)*2:h={}', crop='min({},iw):min({},ih)'\""
                                       " -f singlejpeg pipe:".format(height+(height/10), width, height)),
                           stdout=PIPE)
     return process

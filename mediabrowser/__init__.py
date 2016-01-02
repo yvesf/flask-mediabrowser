@@ -1,4 +1,5 @@
 import os
+import io
 import logging
 import mimetypes
 from datetime import datetime
@@ -35,6 +36,58 @@ class cached(object):
                 return value
 
         return wrapped_func
+
+class cached_stream(object):
+    """decorator to apply SavingIoWrapper"""
+    def __init__(self, cache, keyfunc):
+        self.cache = cache
+        self.keyfunc = keyfunc
+    def __call__(self, func):
+        def wrapped_func(*args, **kwargs):
+            key = self.keyfunc(*args, **kwargs)
+            cached_value = self.cache.get(key)
+            if cached_value is not None:
+                return io.BytesIO(cached_value)
+            else:
+                value = func(*args, **kwargs)
+                return SavingIoWrapper(value, key, self.cache)
+
+        return wrapped_func
+
+
+class SavingIoWrapper(io.RawIOBase):
+    """Wraps a read-only io stream and buffers all read-ed data.
+    on close() that data is written to the specified cache"""
+    def __init__(self, stream, key, cache):
+        self.stream = stream
+        self.key = key
+        self.cache = cache
+        self.buf = b""
+        self.finished = False
+
+    def close(self):
+        if self.finished:
+            self.cache.set(self.key, self.buf)
+            logging.info("Saved iostream after close to key {} with"
+                         " length={}".format(self.key, len(self.buf)))
+        self.stream.close()
+
+    @property
+    def closed(self):
+        return self.stream.closed
+
+    def readable(self):
+        return self.stream.readable()
+
+    def seekable(self):
+        return False
+
+    def read(self, size=-1):
+        b = self.stream.read(size)
+        self.buf += b
+        if b == b'':
+            self.finished = True
+        return b
 
 
 def build(root_directory, cache):
@@ -85,6 +138,16 @@ def build(root_directory, cache):
             else:
                 return None
 
+    @cached_stream(cache=cache, keyfunc=lambda ospath: "thumb_video_{}".format(ospath))
+    def ffmpeg_thumbnail_video(ospath):
+        process = ffmpeg.thumbnail_video(ospath, 100, 60)
+        return process.stdout
+
+    @cached_stream(cache=cache, keyfunc=lambda ospath: "thumb_poster_{}".format(ospath))
+    def ffmpeg_thumbnail_poster(ospath):
+        process = ffmpeg.thumbnail(ospath, 852, 480)
+        return process.stdout
+
     @blueprint.route('/assets/<path:filename>')
     def assets(filename):
         return blueprint.send_static_file(filename)
@@ -131,8 +194,8 @@ def build(root_directory, cache):
         buf += '#EXT-X-ENDLIST\n'
         return Response(buf, mimetype='application/x-mpegurl')
 
-    @blueprint.route('/<path:path>/thumbnail')
-    def thumbnail(path):
+    @blueprint.route('/<path:path>/poster')
+    def poster(path):
         path = os.path.normpath(path)
         ospath = os.path.join(root_directory, path)
         client_mtime = request.if_modified_since
@@ -140,8 +203,8 @@ def build(root_directory, cache):
         if client_mtime is not None and mtime <= client_mtime:
             return Response(status=304)
         else:
-            process = ffmpeg.thumbnail(ospath, 90, 50)
-            r = Response(process.stdout, mimetype="image/jpeg")
+            stream = ffmpeg_thumbnail_poster(ospath)
+            r = Response(stream, mimetype="image/jpeg")
             r.last_modified = mtime
             return r
 
@@ -154,8 +217,8 @@ def build(root_directory, cache):
         if client_mtime is not None and mtime <= client_mtime:
             return Response(status=304)
         else:
-            process = ffmpeg.thumbnail_video(ospath, 90, 50)
-            r = Response(process.stdout, mimetype="video/webm")
+            stream = ffmpeg_thumbnail_video(ospath)
+            r = Response(stream, mimetype="video/webm")
             r.last_modified = mtime
             return r
 

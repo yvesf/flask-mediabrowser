@@ -60,7 +60,7 @@
         var config = {
             debug: logger,
             maxBufferLength: 500,
-            manifestLoadingTimeOut: 120000,
+            manifestLoadingTimeOut: 20000,
             levelLoadingTimeOut: 20000,
             fragLoadingTimeOut: 50000
         };
@@ -69,6 +69,8 @@
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
             video.play();
+            video.setAttribute('poster', 
+                "{{ url_for('mediabrowser.poster', path=path) }}");
         });
         hls.on(Hls.Events.ERROR, function (event, data) {
             if (data.fatal) {

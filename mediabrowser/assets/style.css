@@ -50,10 +50,17 @@ body.list {
     font-size: 36px;
 }
 
+body.list a {
+    vertical-align: super;
+}
+
+body.list video {
+    display: inline;
+}
+
 body.list > div {
-    vertical-align: middle;
     overflow: hidden;
-    height: 64px;
+    height: 60px;
     white-space: nowrap;
 }
 

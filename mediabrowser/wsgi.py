@@ -1,7 +1,7 @@
 import mediabrowser
 
 from flask import Flask
-from werkzeug.contrib.cache import SimpleCache
+from werkzeug.contrib.cache import FileSystemCache
 
 import os
 import logging
@@ -10,7 +10,12 @@ logging.basicConfig(level=logging.INFO)
 root = os.getenv("MEDIABROWSER_ROOT")
 if not root:
 	raise Exception('Must set MEDIABROWSER_ROOT variable')
-cache = SimpleCache()
+cache_dir = os.getenv("MEDIABROWSER_CACHEDIR")
+if not cache_dir:
+	raise Exception('Must set MEDIABROWSER_CACHEDIR variable')
+
+# default_timeout=0 doesn't work with FileSystemCache
+cache = FileSystemCache(cache_dir, default_timeout=9999999999, threshold=5000)
 application = Flask("mediabrowser-demo")
 application.register_blueprint(mediabrowser.build(root, cache))
 

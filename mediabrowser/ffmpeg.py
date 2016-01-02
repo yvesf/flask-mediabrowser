@@ -72,7 +72,7 @@ def find_next_keyframe(ospath, start, max_offset):
 
             data[name] = value
 
-            if 'pkt_duration_time' in data:
+            if 'pkt_duration_time' in data and data['pkt_duration_time'][1:-1] != "N/A":
                 prev_duration = float(data['pkt_duration_time'][1:-1])
 
             if 'key_frame' in data and data['key_frame'] == '1' and prev_duration is not None:
@@ -103,7 +103,7 @@ def calculate_splittimes(ospath, chunk_duration):
     """
 
     def calculate_points(media_duration):
-        pos = 10
+        pos = min(20, media_duration)
         while pos < media_duration:
             yield pos
             pos += chunk_duration

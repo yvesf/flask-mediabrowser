@@ -154,8 +154,8 @@ def build(root_directory, cache):
         if client_mtime is not None and mtime <= client_mtime:
             return Response(status=304)
         else:
-            thumbnail_stream = ffmpeg.thumbnail_video(ospath, 90, 50)
-            r = Response(thumbnail_stream, mimetype="video/webm")
+            process = ffmpeg.thumbnail_video(ospath, 90, 50)
+            r = Response(process.stdout, mimetype="video/webm")
             r.last_modified = mtime
             return r
 

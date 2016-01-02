@@ -115,8 +115,8 @@ def calculate_splittimes(ospath, chunk_duration):
 
 
 def thumbnail(ospath, width, height):
-    process = LoggedPopen(shlex.split("ffmpeg -noaccurate_seek -ss 25.0 -i") + [ospath] +
-                          shlex.split("-frames:v 10 -map 0:0"
+    process = LoggedPopen(shlex.split("ffmpeg -v fatal -noaccurate_seek -ss 25.0 -i") + [ospath] +
+                          shlex.split("-frames:v 10 -map 0:v"
                                       " -filter:v 'scale=w=oh*a:h={}, crop=(min(iw\,{})):(min(ih\,{}))'"
                                       " -f singlejpeg pipe:".format(height+(height/10), width, height)),
                           stdout=PIPE)
@@ -131,7 +131,7 @@ def thumbnail_video(ospath, width, height):
     for pos in chunk_startpos:
         command += ["-ss", "{:.6f}".format(pos), "-t", "2", "-i", ospath]
 
-    filter = " ".join(map(lambda i: "[{}:0]".format(i), range(len(chunk_startpos))))
+    filter = " ".join(map(lambda i: "[{}:v]".format(i), range(len(chunk_startpos))))
     filter += " concat=n={}:v=1:a=0 [v1]".format(len(chunk_startpos))
     filter += "; [v1] fps=14 [v2]"
     filter += "; [v2] scale='w=trunc(oh*a/2)*2:h={}' [v3]".format(height + 6)
@@ -140,4 +140,4 @@ def thumbnail_video(ospath, width, height):
     command += shlex.split("-c:v libvpx -deadline realtime -f webm pipe:")
 
     encoder = LoggedPopen(command, stdout=PIPE)
-    return encoder.stdout
+    return encoder

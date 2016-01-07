@@ -96,7 +96,7 @@ def build(root_directory, cache):
 
     @cached(cache=cache, keyfunc=lambda ospath: ospath)
     def splittimes_cached(ospath):
-        return list(ffmpeg.calculate_splittimes(ospath, 50))
+        return list(ffmpeg.calculate_splittimes(ospath, 60))
 
     @cached(cache=cache, keyfunc=lambda path: "ffprobe_{}".format(path))
     def ffprobe(path):

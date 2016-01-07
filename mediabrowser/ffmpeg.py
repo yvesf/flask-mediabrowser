@@ -103,7 +103,7 @@ def calculate_splittimes(ospath, chunk_duration):
     """
 
     def calculate_points(media_duration):
-        pos = min(20, media_duration)
+        pos = min(60, media_duration)
         while pos < media_duration:
             yield pos
             pos += chunk_duration

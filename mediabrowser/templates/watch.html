@@ -62,7 +62,7 @@
             maxBufferLength: 500,
             manifestLoadingTimeOut: 20000,
             levelLoadingTimeOut: 20000,
-            fragLoadingTimeOut: 50000
+            fragLoadingTimeOut: 120000
         };
         var hls = new Hls(config);
         hls.loadSource("{{ url_for('mediabrowser.m3u8', path=path) }}");

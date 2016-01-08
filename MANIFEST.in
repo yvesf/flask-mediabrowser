@@ -1,0 +1,2 @@
+include mediabrowser/assets/*
+include mediabrowser/templates/*

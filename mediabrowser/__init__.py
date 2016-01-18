@@ -148,10 +148,6 @@ def build(root_directory, cache):
         process = ffmpeg.thumbnail(ospath, 852, 480)
         return process.stdout
 
-    @blueprint.route('/assets/<path:filename>')
-    def assets(filename):
-        return blueprint.send_static_file(filename)
-
     @blueprint.route('/<path:path>/stream/<float:ss>_<float:t>')
     def stream(ss, t, path):
         path = os.path.normpath(path)

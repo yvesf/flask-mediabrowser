@@ -2,12 +2,12 @@
 <html>
     <head>
         <title>Directory Browser - {{ path }}</title>
-        <link rel="stylesheet" href="{{ url_for('mediabrowser.assets', filename='style.css') }}" />
+        <link rel="stylesheet" href="{{ url_for('mediabrowser.static', filename='style.css') }}" />
     </head>
     <body class="list">
         {% if path != '.' %}
         <div>
-            <img src="{{ url_for('mediabrowser.assets', filename='parent.png') }}" />
+            <img src="{{ url_for('mediabrowser.static', filename='parent.png') }}" />
             <a href="{{ url_for('mediabrowser.listdir', path=parent) }}">
                 Parent Directory
             </a>
@@ -18,7 +18,7 @@
         {% if file['type'] == 'file' %}
         <div>
             <video src="{{ url_for('mediabrowser.thumbnail_video', path=file['fullpath']) }}"
-                poster="{{ url_for('mediabrowser.assets', filename='spinner.gif') }}"
+                poster="{{ url_for('mediabrowser.static', filename='spinner.gif') }}"
                 autoplay="" loop="true" width="100" height="60">
             </video>
             <a href="{{ url_for('mediabrowser.watch', path=file['fullpath']) }}">
@@ -29,7 +29,7 @@
 
         {% if file['type'] == 'directory' %}
         <div>
-            <img src="{{ url_for('mediabrowser.assets', filename='directory.png') }}" />
+            <img src="{{ url_for('mediabrowser.static', filename='directory.png') }}" />
             <a href="{{ file['link'] }}">
                 {{ file['filename'] }}
             </a>

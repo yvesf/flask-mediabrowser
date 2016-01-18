@@ -2,8 +2,8 @@
 <html>
 <head>
     <title>Watch - {{ filename }}</title>
-    <script src="{{url_for('mediabrowser.assets', filename='hls.min.js')}}"></script>
-    <link rel="stylesheet" href="{{ url_for('mediabrowser.assets', filename='style.css') }}"/>
+    <script src="{{url_for('mediabrowser.static', filename='hls.js/hls.min.js')}}"></script>
+    <link rel="stylesheet" href="{{ url_for('mediabrowser.static', filename='style.css') }}"/>
 </head>
 <body class="watch">
 <video controls id="video"></video>
@@ -11,21 +11,21 @@
     <div id="infos">
         <a href="{{ url_for('mediabrowser.m3u8', path=path) }}">
             <div>
-                <img src="{{ url_for('mediabrowser.assets', filename='playlist.png') }}"/>
+                <img src="{{ url_for('mediabrowser.static', filename='playlist.png') }}"/>
                 <br/>
                 HLS with transcoding
             </div>
         </a>
         <a href="{{ url_for('mediabrowser.download_inline', path=path) }}">
             <div>
-                <img src="{{ url_for('mediabrowser.assets', filename='playlist.png') }}"/>
+                <img src="{{ url_for('mediabrowser.static', filename='playlist.png') }}"/>
                 <br/>
                 Inline
             </div>
         </a>
         <a href="{{ url_for('mediabrowser.download', path=path) }}">
             <div>
-                <img src="{{ url_for('mediabrowser.assets', filename='playlist.png') }}"/>
+                <img src="{{ url_for('mediabrowser.static', filename='playlist.png') }}"/>
                 <br/>
                 Download
             </div>
@@ -64,13 +64,22 @@
             levelLoadingTimeOut: 20000,
             fragLoadingTimeOut: 120000
         };
+        video.setAttribute('poster',
+            "{{ url_for('mediabrowser.poster', path=path) }}");
         var hls = new Hls(config);
+        hls.on(Hls.Events.MANIFEST_LOADED, function(event, data) {
+            // test if url contains authentication (http://user:pass@host/)
+            var authUrl = /(http?:\/\/)[^\/]*@([^\/]+\/.*)/.exec(data.url)
+            if (authUrl) {
+                // redirect to same page without authentication.
+                // hls.js fails otherwise in src/utils/url.js #buildAbsoluteURL()
+                window.location = window.location.href;
+            }
+        });
         hls.loadSource("{{ url_for('mediabrowser.m3u8', path=path) }}");
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
             video.play();
-            video.setAttribute('poster', 
-                "{{ url_for('mediabrowser.poster', path=path) }}");
         });
         hls.on(Hls.Events.ERROR, function (event, data) {
             if (data.fatal) {

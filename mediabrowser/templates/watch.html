@@ -69,7 +69,7 @@
         var hls = new Hls(config);
         hls.on(Hls.Events.MANIFEST_LOADED, function(event, data) {
             // test if url contains authentication (http://user:pass@host/)
-            var authUrl = /(http?:\/\/)[^\/]*@([^\/]+\/.*)/.exec(data.url)
+            var authUrl = /(https?:\/\/)[^\/]*@([^\/]+\/.*)/.exec(data.url)
             if (authUrl) {
                 // redirect to same page without authentication.
                 // hls.js fails otherwise in src/utils/url.js #buildAbsoluteURL()

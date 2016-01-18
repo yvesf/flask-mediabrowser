@@ -30,8 +30,13 @@ def stream(ospath, ss, t):
     logging.info('start ffmpeg stream h264 480p on path=%s ss=%s t=%s', ospath, ss, t)
     t_2 = t + 2.0
     output_ts_offset = ss
+    if ss != 0.0:
+        ss_string = "-ss {:0.6f}".format(ss)
+    else:
+        ss_string = ""
+
     cutter = LoggedPopen(
-        shlex.split("ffmpeg -v fatal -ss {ss:.6f} -i ".format(**locals())) +
+        shlex.split("ffmpeg -v fatal {ss_string} -i ".format(**locals())) +
         [ospath] +
         shlex.split("-c:a aac -strict experimental -ac 2 -b:a 64k"
                     " -c:v libx264 -pix_fmt yuv420p -profile:v high -level 4.0 -preset ultrafast -trellis 0"

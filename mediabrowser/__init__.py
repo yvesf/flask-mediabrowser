@@ -297,20 +297,16 @@ def build(root_directory, cache):
                 else:
                     return {'type': 'file',
                             'name': filename,
-                            'download': url_for('mediabrowser.download',
-                                                path=os.path.join(path, filename)),
                             'poster': url_for('mediabrowser.poster',
                                               path=os.path.join(path, filename)),
-                            'trailer': url_for('mediabrowser.thumbnail_video',
-                                               path=os.path.join(path, filename)),
                             'm3u8': url_for('mediabrowser.m3u8',
                                             path=os.path.join(path, filename))}
 
         try:
             path = os.path.normpath(path)
             ospath = os.path.join(root_directory, path)
-            files = list(
-                map(partial(gather_fileinfo, path, ospath), os.listdir(ospath)))
+            files = list(filter(lambda it: it is not None,
+                map(partial(gather_fileinfo, path, ospath), os.listdir(ospath))))
             return jsonify({'files': files})
         except FileNotFoundError:
             abort(404)

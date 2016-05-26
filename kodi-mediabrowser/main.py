@@ -16,19 +16,17 @@ logging.basicConfig(level=logging.INFO)
 _url = sys.argv[0]
 # Get the plugin handle as an integer number.
 _handle = int(sys.argv[1])
-
+# Read settings
 addon = xbmcaddon.Addon()
-
 endpoint = addon.getSetting('endpoint')
 
 
 def list_files(path):
     resp = requests.get(endpoint + path)
     data = resp.json()
-    files = data['files']
-
     listing = []
-    for file in files:
+
+    for file in data['files']:
         list_item = xbmcgui.ListItem(label=file['name'])
 
         if file['type'] == 'directory':
@@ -41,6 +39,7 @@ def list_files(path):
             list_item.setProperty('IsPlayable', 'true')
             url = endpoint + file['m3u8']
             listing.append((url, list_item, False))
+
     xbmcplugin.addDirectoryItems(_handle, listing, len(listing))
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     xbmcplugin.endOfDirectory(_handle)
@@ -50,8 +49,7 @@ def router(paramstring):
     params = dict(parse_qsl(paramstring))
     if params:
         if params['action'] == 'list_files':
-            # Display the list of videos in a provided category.
-            list_videos(params['path'])
+            list_files(params['path'])
         else:
             raise Exception('Invalid params')
     else:

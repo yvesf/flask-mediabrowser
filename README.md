@@ -9,24 +9,25 @@ This webapplication serves the following purpose:
 The chunking is done using ffmpeg's `-ss` and `-t` option.
 This doesn't work properly on some video files.
 
-# Compatibility
+## Compatibility
 
 The video stream is encoded as MPEG4-AVC video and AAC audio stream. That works in:
 
 * Google Chrome / Chromium
 * Android Stock "Browser"
 * Firefox with Media Source Extension (MSE), thus supporting h264/aac
+* [Kodi plugin](kodi-mediabrowser/)
 
-# Requirements
+## Requirements
 
 * python3, flask
 * `ffmpeg` command
 
-# Run tests
+## Run tests
 
     python3 -m unittest test
 
-# Run with WSGI
+## Run with WSGI
 
 (here with waitress)
 

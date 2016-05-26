@@ -1,0 +1,3 @@
+<settings>
+    <setting id="endpoint" type="text" label="Server endpoint" default="http://localhost:8000"/>
+</settings>

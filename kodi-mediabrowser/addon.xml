@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="plugin.video.kodiMediabrowser"
+       version="0.0.1"
+       name="Kodi Mediabrowser"
+       provider-name="yvesf">
+    <requires>
+        <import addon="xbmc.python" version="2.24.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="main.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">Kodi plugin for flask-mediabrowser</summary>
+        <description lang="en">Allows to browse videos from kodi.</description>
+        <disclaimer lang="en">...</disclaimer>
+    </extension>
+</addon>

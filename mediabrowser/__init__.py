@@ -6,7 +6,7 @@ from datetime import datetime
 from functools import partial
 
 from flask import Blueprint, render_template, abort, \
-    url_for, Response, request
+    url_for, Response, request, jsonify
 
 from . import ffmpeg
 
@@ -37,11 +37,14 @@ class cached(object):
 
         return wrapped_func
 
+
 class cached_stream(object):
     """decorator to apply SavingIoWrapper"""
+
     def __init__(self, cache, keyfunc):
         self.cache = cache
         self.keyfunc = keyfunc
+
     def __call__(self, func):
         def wrapped_func(*args, **kwargs):
             key = self.keyfunc(*args, **kwargs)
@@ -58,6 +61,7 @@ class cached_stream(object):
 class SavingIoWrapper(io.RawIOBase):
     """Wraps a read-only io stream and buffers all read-ed data.
     on close() that data is written to the specified cache"""
+
     def __init__(self, stream, key, cache):
         self.stream = stream
         self.key = key
@@ -165,7 +169,7 @@ def build(root_directory, cache):
             new_t_prev_duration, new_t = ffmpeg.find_next_keyframe(ospath, ss + t, t / 2)
             new_t -= new_ss
             # minus one frame
-            new_t -= new_t_prev_duration
+            # new_t -= new_t_prev_duration
 
         process = ffmpeg.stream(ospath, new_ss, new_t)
         return Response(process.stdout, mimetype='video/MP2T')
@@ -274,6 +278,40 @@ def build(root_directory, cache):
                                    files=files,
                                    parent=os.path.dirname(path),
                                    path=path)
+        except FileNotFoundError:
+            abort(404)
+
+    @blueprint.route('/json/', defaults={'path': ''})
+    @blueprint.route('/json/<path:path>')
+    def json(path):
+        def gather_fileinfo(path, ospath, filename):
+            osfilepath = os.path.join(ospath, filename)
+            if os.path.isdir(osfilepath) and not filename.startswith('.'):
+                return {'type': 'directory',
+                        'name': filename,
+                        'path': url_for('mediabrowser.json',
+                                        path=os.path.join(path, filename))}
+            else:
+                if not get_video_mime_type(osfilepath):
+                    return None
+                else:
+                    return {'type': 'file',
+                            'name': filename,
+                            'download': url_for('mediabrowser.download',
+                                                path=os.path.join(path, filename)),
+                            'poster': url_for('mediabrowser.poster',
+                                              path=os.path.join(path, filename)),
+                            'trailer': url_for('mediabrowser.thumbnail_video',
+                                               path=os.path.join(path, filename)),
+                            'm3u8': url_for('mediabrowser.m3u8',
+                                            path=os.path.join(path, filename))}
+
+        try:
+            path = os.path.normpath(path)
+            ospath = os.path.join(root_directory, path)
+            files = list(
+                map(partial(gather_fileinfo, path, ospath), os.listdir(ospath)))
+            return jsonify({'files': files})
         except FileNotFoundError:
             abort(404)
 

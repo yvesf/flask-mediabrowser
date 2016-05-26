@@ -41,7 +41,7 @@ def stream(ospath, ss, t):
         shlex.split("-c:a aac -strict experimental -ac 2 -b:a 64k"
                     " -c:v libx264 -pix_fmt yuv420p -profile:v high -level 4.0 -preset ultrafast -trellis 0"
                     " -crf 31 -vf scale=w=trunc(oh*a/2)*2:h=480"
-                    " -f mpegts"
+                    " -shortest -f mpegts"
                     " -output_ts_offset {output_ts_offset:.6f} -t {t:.6f} pipe:%d.ts".format(**locals())),
         stdout=PIPE)
     return cutter

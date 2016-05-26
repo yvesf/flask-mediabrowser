@@ -11,10 +11,11 @@ This doesn't work properly on some video files.
 
 # Compatibility
 
-The video stream is encoded as h.264 + AAC stream. Tested with
+The video stream is encoded as MPEG4-AVC video and AAC audio stream. That works in:
 
 * Google Chrome / Chromium
 * Android Stock "Browser"
+* Firefox with Media Source Extension (MSE), thus supporting h264/aac
 
 # Requirements
 

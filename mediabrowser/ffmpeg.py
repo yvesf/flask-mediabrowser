@@ -118,6 +118,14 @@ def calculate_splittimes(ospath, chunk_duration):
     for (point, nextPoint) in zip([0.0] + points, points + [duration]):
         yield ("{:0.6f}".format(point), "{:0.6f}".format(nextPoint - point))
 
+def poster(ospath):
+    process = LoggedPopen(shlex.split("ffmpeg -v fatal -noaccurate_seek -ss 25.0 -i") + [ospath] +
+                          shlex.split("-frames:v 1 -map 0:v"
+                                      " -filter:v \"scale='w=trunc(oh*a/2)*2:h=480'\""
+                                      " -f singlejpeg pipe:"),
+                          stdout=PIPE)
+    return process
+
 
 def thumbnail(ospath, width, height):
     process = LoggedPopen(shlex.split("ffmpeg -v fatal -noaccurate_seek -ss 25.0 -i") + [ospath] +

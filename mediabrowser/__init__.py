@@ -149,7 +149,7 @@ def build(root_directory, cache):
 
     @cached_stream(cache=cache, keyfunc=lambda ospath: "thumb_poster_{}".format(ospath))
     def ffmpeg_thumbnail_poster(ospath):
-        process = ffmpeg.thumbnail(ospath, 852, 480)
+        process = ffmpeg.poster(ospath)
         return process.stdout
 
     @blueprint.route('/<path:path>/stream/<float:ss>_<float:t>')
